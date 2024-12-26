@@ -5,10 +5,13 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from starlette import status
 from .auth import get_current_user
-from models import Todos
-from database import SessionLocal
+from ..models import Todos
+from ..database import SessionLocal
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/todos",
+    tags=['todos']
+)
 
 
 def get_db():
@@ -29,11 +32,11 @@ class TodoRequest(BaseModel):
     complete: bool
 
 
-@router.get("/")
+@router.get("/", status_code=status.HTTP_200_OK)
 async def read_all(user: user_dependency,db: db_dependency):
     if user is None:
         raise HTTPException(status_code=401, detail="Authentication Failed")
-    return db.query(Todos).filter(Todos.owner_id == user.get('id'))
+    return db.query(Todos).filter(Todos.owner_id == user.get('id')).all()
 
 @router.get("/todo/{todo_id}", status_code=status.HTTP_200_OK)
 async def read_todo(user: user_dependency,db: db_dependency, todi_id: int = Path(gt=0)):
